@@ -1,226 +1,246 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Wed Dec 06 20:54:07 2023
-@author: Sharanya
+@author: Sanghavi
 """
 
-#----------Importing required libraries -------------------------
-
+#Importing required libraries
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 from scipy.stats import skew
 from scipy.stats import kurtosis
 
 
-def read_world_bank_data(filePath):
+def dataframExtraction(filename):
     """
-      Alter the columns labeled "country" and "date" after reading
-      World Bank data from a CSV file.
+       Used pandas to import the dataset, transpose the dataframe, and
+       get the date and country columns.
 
        Parameters:
-       - filePath: the path of the CSV file holding data from the World Bank.
+       - filename : The path of the data file.
 
        Returns:
-       - df (pd.DataFrame): The original DataFrame read from the CSV file.
-       - transposed (pd.DataFrame): The transposed DataFrame with 'country'
-        and 'date' columns interchanged.
+       - dataFrameOrg: The dataframe with time as column.
+       - dataFrame : The dataframe with country as column.
+
     """
-    yearDF = pd.read_csv(filePath)
-    countryDf = yearDF.copy()
-    countryDf[['Country Name' , 'Time']] = countryDf[['Time' , 'Country Name']]
-    countryDf = countryDf.rename(columns ={'Country Name': 'Time' ,
-                                          'Time': 'Country Name'})
+    dataFrame = pd.read_csv(filename)
+    dataFrameOrg = dataFrame.copy()
+    dataFrame[['Country Name' , 'Time']] = dataFrame[['Time' , 'Country Name']]
+    dataFrame = dataFrame.rename(columns = {'Country Name': 'Time' ,
+                                            'Time': 'Country Name'})
+
+    return dataFrameOrg , dataFrame
 
 
-    return countryDf , yearDF
+def plot_line(dataframe , countries , x_column , y_column , title):
+    """
+        Plot line charts for specified countries and their data over time.
 
+        Parameters:
+        - dataframe (pd.DataFrame): The DataFrame containing the necessary columns.
+        - countries (list): List of countries to plot.
+        - x_column (str): The column representing the x-axis (e.g., 'Year').
+        - y_column (str): The column representing the y-axis (e.g., 'GDP').
+        - title (str): The title of the plot.
 
-def histogram_plot(data , kurtosis_value):
-    # Create a histogram
-    sns.histplot(data , kde = True)
-    plt.title(f'Distribution with Kurtosis {kurtosis_value:.2f} '
-              f'(Renewable energy consumption)' , fontsize = 18)
-    plt.xlabel('Values')
-    plt.ylabel('Frequency')
+        Returns:
+        None
+    """
+    fig , ax = plt.subplots()
+
+    for country in countries:
+        country_data = dataframe[dataframe['Country Name'] == country]
+        ax.plot(country_data[x_column] , country_data[y_column] ,
+                label = country)
+
+    ax.set(xlabel = 'Year' , ylabel = y_column ,
+           title = title)
+    ax.legend()
+    ax.grid(True)
     plt.show()
 
 
-def BarGraph(data , columnName):
-    specific_data_India = data[data['Country Name'] == 'India']
-    specific_data_Srilanka = data[data['Country Name'] == 'Sri Lanka']
-    specific_data_Bangladesh = data[data['Country Name'] == 'Bangladesh']
-    bar_width = 0.2
-    positions = np.arange(len(specific_data_India['Time']))
-    position_variable1 = positions - bar_width
-    position_variable2 = positions
-    position_variable3 = positions + bar_width
-    plt.bar(position_variable1 ,
-            specific_data_India[columnName] , width = bar_width ,
-            label = 'India' , color ='green')
-    plt.bar(position_variable2 ,
-            specific_data_Srilanka[columnName] ,
-            width = bar_width ,
-            label = 'Srilanka' , color = 'red')
-    plt.bar(position_variable3 ,
-            specific_data_Bangladesh[columnName] ,
-            width = bar_width ,
-            label = 'Bangladesh' , color = 'blue')
-    # Adding labels and title
-    plt.xlabel('Year')
-    plt.xticks(positions , specific_data_India['Time'])
-    plt.ylabel('Percentage')
-    plt.title(columnName , fontsize =18)
-    # Adding legend
-    plt.legend()
-    # Display a grid
-    plt.grid(True)
-    # Show the plot
-    plt.tight_layout()
-    plt.show()
+def plot_correlation_matrix(correlation_matrix):
+    """
+        Plot a heatmap for the given correlation matrix.
 
+        Parameters:
+        - correlation_matrix (pd.DataFrame): The correlation matrix
+        to be visualized.
 
-def lineGraph(data):
-    for country in ['Pakistan' , 'Bangladesh' , 'Nepal' , 'India' , 'Maldives']:
-        country_data = data_Year[data_Year['Country Name'] == country]
-        # print(country_data['Total greenhouse gas emissions '])
-        plt.plot(country_data['Time'] , country_data['Total greenhouse gas emissions '] ,
-                 label = country)
+        Returns:
+        None
+    """
 
-    # Adding labels and title
-    plt.xlabel('Year')
-    plt.ylabel('Total greenhouse gas emissions')
-    plt.title('Total greenhouse gas emissions Over the Years' , fontsize = 18)
-
-    # Adding legend
-    plt.legend()
-
-    # Display a grid
-    plt.grid(True)
-    plt.show()
-
-
-def pieChart(data):
-    # pie chart
-    piedata = data[(data['Time'] == 2020)]
-    countrynames = []
-    sizes = []
-    for country in ['Pakistan', 'Bangladesh' , 'Nepal' , 'India' , 'Maldives']:
-        countrynames.append(country)
-        country_data = piedata[piedata['Country Name'] == country]
-        sizes.append(country_data['Agricultural land (% of land area)'].values[0])
-        # print(country_data['Agricultural land (% of land area)'].values)
-
-    # Create a pie chart
-    plt.pie(sizes , labels = countrynames , autopct = '%1.1f%%' , startangle = 90)
-
-    # Customize the plot as needed
-    plt.title('Agricultural land area of different countries' , fontsize = 18)
-
-    # Show the plot
-    plt.show()
-
-
-def heatmap(correlation_matrix):
+    # Check if the correlation matrix is not empty
     if not correlation_matrix.empty:
         # Create a heatmap for the correlation matrix
         plt.figure(figsize = (12 , 8))
-        heatmap = sns.heatmap(correlation_matrix , annot = True , cmap = 'coolwarm' ,
-                              fmt = ".2f" , linewidths = .5)
+        heatmap = plt.imshow(correlation_matrix , cmap = 'coolwarm' ,
+                             interpolation = 'nearest')
+
+        # Add annotations
+        for i in range(len(correlation_matrix)):
+            for j in range(len(correlation_matrix.columns)):
+                plt.text(j , i , f'{correlation_matrix.iloc[i , j]:.2f}' ,
+                         ha = 'center' , va = 'center' , color = 'w')
+
+        # Add axis labels and title
+        plt.xticks(range(len(correlation_matrix.columns)) , correlation_matrix.columns)
+        plt.yticks(range(len(correlation_matrix)) , correlation_matrix.index)
         plt.xlabel('Indicators')
         plt.ylabel('Indicators')
-        cbar = heatmap.collections[0].colorbar
+        plt.title('Correlation Matrix for Selected World Bank Indicators')
+
+        # Add color bar
+        cbar = plt.colorbar(heatmap)
         cbar.set_label('Correlation Coefficient')
-        plt.title('Correlation Matrix for Selected World Bank Indicators' ,
-                  fontsize = 18)
+
+        # Display the heatmap
         plt.show()
     else:
         print("Correlation matrix is empty.")
 
 
-country_data , year_data = read_world_bank_data('Input.csv')
-print("             *************** COUNTRY DATA ******************             ")
-print(country_data.head())
-print("             *************** YEAR DATA  ********************              ")
-print(year_data.head())
+def bargraph_Access_to_electricity_urban_rural(bargraphData , indicatorName1 ,
+                                               indicatorName2 , title , label1 , label2):
+    """
+        Plot a bar graph comparing the percentages of access to electricity for
+         urban and rural areas over time.
 
-#statistical analysis
-print("            ***************** STATISTICAL ANALYSIS **************          ")
+        Parameters:
+        - bargraphData (pd.DataFrame): A DataFrame containing the necessary columns,
+        including 'Time', indicatorName1, and indicatorName2.
+        - indicatorName1 (str): The column name representing the first
+        indicator (e.g., 'Urban Access to Electricity (%)').
+        - indicatorName2 (str): The column name representing the second
+         indicator (e.g., 'Rural Access to Electricity (%)').
+        - title (str): The title of the plot.
+        - label1 (str): Label for the first set of bars.
+        - label2 (str): Label for the second set of bars.
 
-"""
-METHOD 1 :
-DESCRIBE:
-"""
-country_data['Forest_area%'] = pd.to_numeric(country_data['Forest_area%'] ,
+        Returns:
+        None
+    """
+
+    bar_width = 0.35
+    positions = np.arange(len(bargraphData['Time']))
+    position_variable1 = positions - bar_width
+    position_variable2 = positions
+    # Plotting bar graph
+    plt.figure(figsize = (12 , 8))
+    plt.bar(position_variable1 , bargraphData[indicatorName1] , width = bar_width ,
+            label = label1 , color = 'yellow')
+    plt.bar(position_variable2 , bargraphData[indicatorName2] , width = bar_width ,
+            label = label2 , color = 'pink')
+
+    # Adding labels and title
+    plt.xlabel('Year')
+    plt.xticks(positions , bargraphData['Time'])
+    plt.ylabel('Percentage')
+    plt.title(title)
+
+    # Adding legend
+    plt.legend()
+
+    # Display a grid
+    plt.grid(True)
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
+
+
+# Task 1 :
+#Returning two dataframes: one transposed with years as columns and
+# another with countries as columns.
+YearDataFrame , countryDataFrame = dataframExtraction('Dataset.csv')
+print("Year Data Frame")
+print(YearDataFrame.head())
+print("Country Data Frame")
+print(countryDataFrame.head())
+
+# Task 2 :
+# STATISTICAL ANALYSIS
+#METHOD 1
+countryDataFrame['Electricity production from oil, gas and coal sources (% of total)'] = \
+    pd.to_numeric(countryDataFrame['Electricity production from oil, gas and coal sources (% of total)'] ,
                                              errors = 'coerce')
-describes = country_data['Forest_area%'].describe()
-print("******** METHOD 1 : Describes ")
-print(describes)
-
-"""
-METHOD 2 :
-SKEWNESS
-"""
-print("********** METHOD 2 : Skewness  ")
-skew_column_name = 'Total greenhouse gas emissions '
-# Use apply with a lambda function to convert the column to numeric and calculate skewness
-country_data[skew_column_name] = country_data[skew_column_name]\
-    .apply(lambda x: pd.to_numeric(x , errors = 'coerce'))
-# Now, you can calculate skewness
-skewness_value = country_data[skew_column_name].skew()
-print("Skewness of Total greenhouse gas emissions is" , skewness_value)
-
-"""
-METHOD 3:
-KURTOSIS
-"""
-
-print("*********** METHOD 3: Kurtosis ")
-kurtosis_column = 'Renewable_energy_consumption'
-# Replace non-numeric values with NaN
-country_data[kurtosis_column] = pd.to_numeric(country_data[kurtosis_column] ,
-                                              errors = 'coerce')
-# Calculate kurtosis
-kurtosis_value = country_data[kurtosis_column].kurtosis()
-print('Kurtosis for Renewable energy consumption (% of total final energy consumption) is ' ,
-      kurtosis_value)
-histogram_plot(country_data[kurtosis_column] , kurtosis_value)
-
-"""CORELATION"""
-print(country_data.columns)
-country_data['greenhouseGasEmissions'] = (country_data['Total greenhouse gas emissions '] /
-                                          country_data['Total greenhouse gas emissions ']
-                                          .sum()) * 100
-
-
-#Heat map
-# Select a few indicators for analysis
-selected_indicators = ['greenhouseGasEmissions' , 'Forest_area%' ,
-                       'Renewable_energy_consumption']
-# Extract the relevant data for the selected indicators
-df_selected_indicators = country_data[selected_indicators]
-# Calculate the correlation matrix
-correlation_matrix = df_selected_indicators.corr()
-#heat map
-heatmap(correlation_matrix)
-
-
-#bar graph
-data_Year = country_data[(country_data['Time'] >= 2015) &
-                         (country_data['Time'] <= 2020)]
-BarGraph(data_Year , 'Renewable_energy_consumption')
+describes_electricityProduction_fromOil = countryDataFrame['Electricity production from oil, gas and ' \
+                                                           'coal sources (% of total)'].describe()
+print("Describes Analysis for electric city production from oil")
+print(describes_electricityProduction_fromOil)
+#METHOD 2
+YearDataFrame['Electric power consumption (kWh per capita) '] = pd.to_numeric(
+    YearDataFrame['Electric power consumption (kWh per capita) '] , errors='coerce'
+)
+maxValue = pd.to_numeric(countryDataFrame[countryDataFrame['Time'] ==
+                                          '2019']['Renewable energy consumption (%)'] , errors = 'coerce').max()
+minValue = pd.to_numeric(countryDataFrame[countryDataFrame['Time'] ==
+                                          '2019']['Renewable energy consumption (%)'] , errors = 'coerce').min()
+print("Maximum renewable energy consumption in the year 2019: " , maxValue)
+print("Minimum renewable energy consumption in the year 2019: " , minValue)
+#METHOD 3
+print("Skewness")
+countryDataFrame['Access to electricity, urban (% of urban population) '] = \
+    pd.to_numeric(countryDataFrame['Access to electricity, urban (% of urban population) '] , errors='coerce')
+# Calculate skewness
+skewness = skew(countryDataFrame['Access to electricity, urban (% of urban population) '].dropna())
+print("Skewness for 'Access to electricity, urban (% of urban population) " , skewness)
+#METHOD 4
+print("Kurtosis")
+data_for_kurtosis = countryDataFrame['Forest area (% of land area)'].dropna()
+kurtosis_value = kurtosis(data_for_kurtosis , fisher=False)
+print("Kurtosis:" , kurtosis_value)
 
 #Line Graph
-data_Year = country_data[(country_data['Time'] >= 2013) &
-                         (country_data['Time'] <= 2020)]
-lineGraph(data_Year)
+#GDP per capita of usa over years
 
-#pieGraph
-pieChart(country_data)
+countries_to_plot = ['India' , 'United Kingdom' , 'Thailand' , 'Pakistan' , 'Norway' , 'Netherlands']
+plot_line(countryDataFrame , countries_to_plot , x_column = 'Time' ,
+          y_column = 'Electricity production from oil, gas and coal sources (% of total)',
+          title='Electricity production from oil, gas and coal sources')
 
-#bargraph
-data_Year = country_data[(country_data['Time'] >= 2015) & (country_data['Time'] <= 2020)]
-BarGraph(data_Year , 'Oil rents (% of GDP)')
+#Heat Map
+#Fertilizer production vs agriculture productivity
+specificIndicators = ['Crop production' , 'Fertilizerconsumption(%)']
+# Extract the relevant data for the selected indicators
+df_specificIndicators = countryDataFrame[specificIndicators]
+df_specificIndicators  = df_specificIndicators .copy()
+df_specificIndicators .replace('..' , np.nan , inplace = True)
+df_selected_indicators = df_specificIndicators .apply(pd.to_numeric , errors = 'coerce')
+
+# Calculate the correlation matrix
+correlationMatrix = df_specificIndicators.corr()
+print(correlationMatrix)
+
+plot_correlation_matrix(correlationMatrix)
+
+bargraphData = countryDataFrame[countryDataFrame['Country Name'] == 'India']
+bargraph_Access_to_electricity_urban_rural(bargraphData ,
+                                           'Access to electricity, rural (% of rural population) ' ,
+                                           'Access to electricity, rural (% of rural population) ' ,
+                                           'Access to electricity urban vs rural','Access to electricity urban' ,
+                                           'Access to electricity rural')
+bargraph_Access_to_electricity_urban_rural(bargraphData , 'Total natural resources rents (% of GDP) ' ,
+                                           'Forest area (% of land area)','Total natural resource rents vs forest land' ,
+                                           'natural resource rents','forest area')
+
+plot_line(countryDataFrame , countries_to_plot , x_column = 'Time' ,
+          y_column = 'GDP per capita, PPP (current international $)' ,
+          title = 'GDP per capita')
+
+specificIndicators = ['Crop production' , 'GDP per capita, PPP (current international $)']
+# Extract the relevant data for the selected indicators
+df_specificIndicators = countryDataFrame[specificIndicators]
+df_specificIndicators  = df_specificIndicators .copy()
+df_specificIndicators .replace('..' ,  np.nan ,  inplace = True)
+df_selected_indicators = df_specificIndicators .apply(pd.to_numeric , errors = 'coerce')
+
+# Calculate the correlation matrix
+correlationMatrix = df_specificIndicators.corr()
+print(correlationMatrix)
+
+plot_correlation_matrix(correlationMatrix)
 
